@@ -1,0 +1,1012 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Secure Password Generator & Vault</title>
+  <style>
+    :root{
+      --bg:#0f1220; /* deep navy */
+      --panel:#151935; /* card bg */
+      --muted:#8a93b2;
+      --text:#eef1ff;
+      --accent:#6dd5fa;
+      --accent2:#7f53ac;
+      --good:#26d07c;
+      --warn:#ffc857;
+      --bad:#ff5d73;
+      --border:#20264d;
+      --chip:#1d2350;
+      --shadow:0 10px 30px rgba(0,0,0,.35);
+      --radius:14px;
+    }
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{margin:0;background:radial-gradient(1200px 800px at 20% -10%, #1a2049 0%, #0f1220 60%);color:var(--text);font:14px/1.35 system-ui, -apple-system, Segoe UI, Roboto, Ubuntu, Cantarell, Noto Sans, Helvetica, Arial, "Apple Color Emoji","Segoe UI Emoji"}
+    h1,h2,h3{margin:.2rem 0 .6rem}
+    h1{font-size:1.6rem}
+    h2{font-size:1.25rem;color:#d6dbff}
+    h3{font-size:1.05rem;color:#c8cdfa}
+    a{color:var(--accent)}
+
+    .container{max-width:1200px;margin:0 auto;padding:18px}
+    .grid{display:grid;gap:16px}
+    .grid.cols-3{grid-template-columns:repeat(3,1fr)}
+    .grid.cols-2{grid-template-columns:repeat(2,1fr)}
+    @media (max-width:1020px){.grid.cols-3{grid-template-columns:1fr}}
+    @media (max-width:860px){.grid.cols-2{grid-template-columns:1fr}}
+
+    .card{background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(0,0,0,.08));border:1px solid var(--border);border-radius:var(--radius);box-shadow:var(--shadow);padding:16px}
+    .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+    .row.nowrap{flex-wrap:nowrap}
+    .grow{flex:1 1 auto}
+    .right{margin-left:auto}
+    .muted{color:var(--muted)}
+    .small{font-size:.9em}
+    .tiny{font-size:.8em}
+
+    .input, select, textarea{background:#0e1330;border:1px solid var(--border);color:var(--text);padding:10px 12px;border-radius:10px;outline:none}
+    .input:focus, select:focus, textarea:focus{border-color:#5160ff;box-shadow:0 0 0 2px rgba(81,96,255,.25)}
+    input[type="range"]{width:100%}
+
+    .btn{border:1px solid var(--border);background:linear-gradient(180deg,#192155,#0f173f);color:#f2f4ff;border-radius:12px;padding:10px 14px;cursor:pointer;font-weight:600}
+    .btn:hover{filter:brightness(1.08)}
+    .btn:active{transform:translateY(1px)}
+    .btn.ghost{background:transparent}
+    .btn.primary{background:linear-gradient(90deg,var(--accent2),var(--accent));border-color:transparent;color:#0b0f2a}
+    .btn.success{background:linear-gradient(90deg,#1fd188,#68f6b1);color:#07241b;border-color:transparent}
+    .btn.warn{background:linear-gradient(90deg,#ffc857,#f7ac3b);color:#3a2500;border-color:transparent}
+    .btn.danger{background:linear-gradient(90deg,#ff5d73,#ff897f);color:#30040d;border-color:transparent}
+
+    .toggle{display:inline-flex;align-items:center;gap:6px;padding:8px 10px;border:1px solid var(--border);background:var(--chip);border-radius:999px;cursor:pointer;user-select:none}
+    .toggle[data-on="true"]{background:linear-gradient(180deg,#202a6b,#1a1f4b);border-color:#33409b}
+    .dot{width:10px;height:10px;border-radius:50%;background:#b0b8ff}
+
+    .preset{padding:8px 10px;border:1px dashed var(--border);border-radius:12px;cursor:pointer;background:#0b1030}
+    .preset:hover{border-color:#3d4698}
+
+    .preview{font-family:ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", monospace;background:#0b1030;border:1px dashed #2b3477;padding:14px;border-radius:12px;overflow:auto}
+
+    .meter{height:12px;background:#1b1f45;border:1px solid var(--border);border-radius:999px;position:relative;overflow:hidden}
+    .meter .fill{position:absolute;left:0;top:0;bottom:0;width:0%;transition:width .25s ease;background:linear-gradient(90deg,var(--bad),#ffae42,#ffe66d,#79f49d,#31e89a,#0fe39d)}
+
+    .grid-list{display:grid;grid-template-columns:60px 1fr 120px 180px 120px;gap:8px;align-items:center}
+    .grid-list .head{font-weight:700;color:#cdd4ff}
+    @media (max-width:900px){.grid-list{grid-template-columns:1fr}}
+
+    .pill{padding:4px 8px;border-radius:999px;border:1px solid var(--border);background:#0e1438}
+
+    .toast{position:fixed;right:18px;bottom:18px;background:#091034;border:1px solid #223;box-shadow:var(--shadow);color:#e6ebff;padding:10px 14px;border-radius:10px;opacity:0;transform:translateY(6px);pointer-events:none;transition:.25s}
+    .toast.show{opacity:1;transform:translateY(0)}
+
+    details summary{cursor:pointer}
+    code.kbd{padding:2px 6px;border-radius:6px;border:1px solid var(--border);background:#0e1438}
+
+    .tabbar{display:flex;gap:8px;margin-bottom:8px}
+    .tabbar button{padding:8px 10px;border-radius:10px;border:1px solid var(--border);background:#0f153a;color:#cfe1ff}
+    .tabbar button.active{background:linear-gradient(180deg,#222b6d,#151c52);border-color:#36419c}
+
+    .danger-text{color:#ff8ea0}
+  </style>
+</head>
+<body>
+  <div class="container">
+    <header class="row">
+      <h1 class="grow">🔐 Secure Password Generator & Local Vault</h1>
+      <button id="btnUnlockVault" class="btn">🔓 Unlock Vault</button>
+      <button id="btnLockVault" class="btn ghost" title="Lock vault" style="display:none">🔒 Lock</button>
+    </header>
+
+    <section class="grid cols-3">
+      <!-- Generator Settings -->
+      <div class="card">
+        <h2>Generator Settings</h2>
+        <div class="row"><label for="len" class="muted">Length</label><div class="right small" id="lenLabel">16</div></div>
+        <input id="len" type="range" min="6" max="128" value="16"/>
+        <div class="row" style="margin-top:8px">
+          <div class="preset" data-len="12" title="Quick (12)">⚡ Quick 12</div>
+          <div class="preset" data-len="16" title="Standard (16)">✅ Standard 16</div>
+          <div class="preset" data-len="24" title="Strong (24)">🛡️ Strong 24</div>
+          <div class="preset" data-len="32" title="Paranoid (32)">🧠 Paranoid 32</div>
+        </div>
+        <hr style="border-color:var(--border);opacity:.3;margin:14px 0">
+        <div class="row">
+          <div class="toggle" id="tgUpper" role="switch" aria-checked="true" data-on="true"><span class="dot"></span> A–Z</div>
+          <div class="toggle" id="tgLower" role="switch" aria-checked="true" data-on="true"><span class="dot"></span> a–z</div>
+          <div class="toggle" id="tgDigits" role="switch" aria-checked="true" data-on="true"><span class="dot"></span> 0–9</div>
+          <div class="toggle" id="tgSymbols" role="switch" aria-checked="true" data-on="true"><span class="dot"></span> Symbols</div>
+        </div>
+        <div class="row small muted" id="charsetStats" style="margin-top:6px"></div>
+        <div class="row" style="margin-top:8px">
+          <label class="small muted" for="symbols">Symbols</label>
+          <input id="symbols" class="input grow" value="!@#$%^&*()_-+={}[]:;,.?/~|" maxlength="128" />
+        </div>
+        <div class="row" style="margin-top:10px">
+          <label class="toggle" id="tgEnsureClasses" data-on="true" aria-checked="true" role="switch" title="Guarantee at least one character from each selected class">
+            <span class="dot"></span> Ensure all selected character classes appear
+          </label>
+        </div>
+        <hr style="border-color:var(--border);opacity:.3;margin:14px 0">
+        <div class="row">
+          <label class="muted" for="batchCount">Batch count</label>
+          <input class="input" id="batchCount" type="number" min="1" max="200" step="1" value="10" style="width:100px">
+          <div class="right tiny muted">Max 200</div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnGenerateBatch" class="btn">📦 Generate Batch</button>
+          <button id="btnExportBatch" class="btn ghost">⬇️ Export Batch</button>
+        </div>
+      </div>
+
+      <!-- Live Preview + Meter -->
+      <div class="card">
+        <h2>Live Preview</h2>
+        <div class="row">
+          <div class="preview grow" id="preview" style="font-size:1.1rem">(password will appear here)</div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnRegenerate" class="btn">🎲 Regenerate</button>
+          <button id="btnCopy" class="btn primary">📋 Copy</button>
+          <button id="btnSaveToVault" class="btn success">💾 Save to Vault</button>
+          <button id="btnAddToHistory" class="btn ghost">🕘 Add to History</button>
+        </div>
+        <div class="row" style="margin-top:12px">
+          <div class="grow">
+            <div class="row"><div class="small muted">Strength</div><div class="right small" id="strengthLabel">–</div></div>
+            <div class="meter" aria-label="Strength meter" title="Entropy-based strength">
+              <div class="fill" id="meterFill"></div>
+            </div>
+            <div class="row small" style="margin-top:6px">
+              <div class="pill" id="bitsLabel">Entropy: –</div>
+              <div class="pill" id="crackLabel">Crack time: –</div>
+              <div class="pill" id="coverageLabel">Class coverage: –</div>
+              <div class="right row">
+                <label class="muted small" for="attackRate">Attacker speed</label>
+                <select id="attackRate" class="input">
+                  <option value="1e3">1e3/s (online throttled)</option>
+                  <option value="1e6">1e6/s (fast online)</option>
+                  <option value="1e9">1e9/s (GPU)</option>
+                  <option value="1e10" selected>1e10/s (single GPU)</option>
+                  <option value="1e12">1e12/s (cluster)</option>
+                </select>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Memorable Options -->
+      <div class="card">
+        <h2>Memorable Generators</h2>
+        <div class="tabbar">
+          <button class="tab active" data-tab="passphrase">Passphrase (BIP‑39 words)</button>
+          <button class="tab" data-tab="pattern">Pattern‑based</button>
+        </div>
+        <div id="tab-passphrase">
+          <div class="row">
+            <label class="muted" for="ppWords">Words</label>
+            <input id="ppWords" class="input" type="number" min="3" max="10" value="6" style="width:80px">
+            <label class="muted" for="ppSep" style="margin-left:8px">Separator</label>
+            <select id="ppSep" class="input">
+              <option value=" ">space</option>
+              <option value="-" selected>- hyphen</option>
+              <option value=".">dot</option>
+              <option value="_">underscore</option>
+              <option value="random">random</option>
+            </select>
+            <label class="muted" for="ppCase" style="margin-left:8px">Case</label>
+            <select id="ppCase" class="input">
+              <option value="lower">lower</option>
+              <option value="title" selected>Title</option>
+              <option value="upper">UPPER</option>
+              <option value="capitalize">Capitalize first</option>
+            </select>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <label class="toggle" id="ppAddNumber" data-on="false"><span class="dot"></span> Append number</label>
+            <label class="toggle" id="ppAddSymbol" data-on="false"><span class="dot"></span> Append symbol</label>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="btnGenPassphrase" class="btn">✨ Generate Passphrase</button>
+            <button id="btnUsePassphrase" class="btn ghost">Use in Preview</button>
+            <span class="small muted right" id="ppEntropy">Entropy: –</span>
+          </div>
+          <div class="preview" id="ppPreview" style="margin-top:8px"></div>
+        </div>
+        <div id="tab-pattern" style="display:none">
+          <div class="row">
+            <label class="muted" for="pattern">Pattern</label>
+            <input id="pattern" class="input grow" value="Cvccvc-###-CvccvS" placeholder="e.g., Cvccvc-###-CvccvS"/>
+          </div>
+          <div class="tiny muted" style="margin-top:6px">
+            Tokens: <code class="kbd">C</code> uppercase consonant, <code class="kbd">c</code> lowercase consonant, <code class="kbd">V</code> uppercase vowel, <code class="kbd">v</code> lowercase vowel, <code class="kbd">L</code>/<code class="kbd">l</code> any letter, <code class="kbd">#</code>/<code class="kbd">D</code> digit, <code class="kbd">S</code> symbol, other characters are literal.
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="btnGenPattern" class="btn">✨ Generate Pattern</button>
+            <button id="btnUsePattern" class="btn ghost">Use in Preview</button>
+            <span class="small muted right" id="patEntropy">Entropy: –</span>
+          </div>
+          <div class="preview" id="patPreview" style="margin-top:8px"></div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid cols-2" style="margin-top:16px">
+      <!-- Batch Results -->
+      <div class="card">
+        <h2>Batch Results</h2>
+        <div id="batchList" class="grid-list">
+          <div class="head">#</div>
+          <div class="head">Password</div>
+          <div class="head">Entropy</div>
+          <div class="head">Generated</div>
+          <div class="head">Actions</div>
+        </div>
+      </div>
+
+      <!-- History -->
+      <div class="card">
+        <h2>Session History</h2>
+        <div class="row small muted">History is in‑memory only. Persist important items to the Vault.</div>
+        <div id="historyList" class="grid-list" style="margin-top:8px">
+          <div class="head">#</div>
+          <div class="head">Password</div>
+          <div class="head">Entropy</div>
+          <div class="head">Timestamp</div>
+          <div class="head">Actions</div>
+        </div>
+        <div class="row" style="margin-top:8px">
+          <button id="btnExportHistory" class="btn ghost">⬇️ Export History</button>
+          <button id="btnClearHistory" class="btn danger right">🧹 Clear History</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid cols-2" style="margin-top:16px">
+      <!-- Vault -->
+      <div class="card">
+        <h2>Local Vault</h2>
+        <div id="vaultLocked">
+          <div class="row" style="margin-top:6px"><span class="muted">Set or enter your vault passphrase. It never leaves your device. If you forget it, your data is unrecoverable.</span></div>
+          <div class="row" style="margin-top:10px">
+            <input id="vaultPass" class="input grow" type="password" placeholder="Vault passphrase" autocomplete="current-password">
+            <button id="btnDoUnlock" class="btn">Unlock / Create</button>
+          </div>
+        </div>
+        <div id="vaultUnlocked" style="display:none">
+          <div class="row small muted"><span id="vaultStats">–</span><div class="right"><button id="btnChangePass" class="btn ghost">Change Passphrase</button></div></div>
+          <div id="vaultList" class="grid-list" style="margin-top:8px">
+            <div class="head">#</div>
+            <div class="head">Label</div>
+            <div class="head">Password</div>
+            <div class="head">Saved</div>
+            <div class="head">Actions</div>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <input id="vaultLabel" class="input" placeholder="Label (e.g., email, db root)" style="min-width:220px">
+            <button id="btnSavePreviewToVault" class="btn success">💾 Save Current Preview</button>
+          </div>
+          <div class="row" style="margin-top:8px">
+            <button id="btnExportVault" class="btn">⬇️ Export Vault (encrypted)</button>
+            <button id="btnExportVaultPlain" class="btn ghost" title="Only when you trust your environment">⬇️ Export Vault (decrypted)</button>
+            <button id="btnPurgeVault" class="btn danger right">🗑️ Purge Vault</button>
+          </div>
+        </div>
+      </div>
+
+      <!-- Export Options -->
+      <div class="card">
+        <h2>Export Options</h2>
+        <div class="row">
+          <label class="muted" for="exportFormat">Format</label>
+          <select id="exportFormat" class="input">
+            <option value="json" selected>JSON</option>
+            <option value="csv">CSV</option>
+          </select>
+          <label class="muted" for="exportEnc" style="margin-left:8px">Encrypt with passphrase?</label>
+          <select id="exportEnc" class="input">
+            <option value="none" selected>No</option>
+            <option value="pass">Yes (AES‑GCM)</option>
+          </select>
+        </div>
+        <div class="row" id="exportPassRow" style="margin-top:8px; display:none">
+          <input id="exportPass" class="input grow" type="password" placeholder="Export encryption passphrase">
+        </div>
+        <div class="row" style="margin-top:10px">
+          <button id="btnExportAll" class="btn">⬇️ Export All (Batch + History)</button>
+        </div>
+        <details style="margin-top:10px">
+          <summary>Security notes</summary>
+          <ul class="small muted">
+            <li>Randomness uses <code>window.crypto.getRandomValues</code> with rejection sampling (no modulo bias).</li>
+            <li>Entropy ≈ <code>L × log₂(N)</code> where N is the size of the selected character set.</li>
+            <li>Expected crack time is based on average guess count (½ of keyspace) at the chosen attack rate.</li>
+            <li>Vault uses PBKDF2‑SHA‑256 → AES‑GCM (256‑bit). Your passphrase never leaves your device.</li>
+          </ul>
+        </details>
+      </div>
+    </section>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+  <script>
+  (function(){
+    'use strict';
+
+    // ========== Utility DOM helpers ==========
+    const $ = sel => document.querySelector(sel);
+    const $$ = sel => Array.from(document.querySelectorAll(sel));
+    const enc = new TextEncoder();
+    const dec = new TextDecoder();
+
+    const toast = (msg, ms=1800) => {
+      const t = $('#toast');
+      t.textContent = msg;
+      t.classList.add('show');
+      setTimeout(()=> t.classList.remove('show'), ms);
+    };
+
+    const nowIso = () => new Date().toISOString();
+
+    // ========== Secure RNG ==========
+    function randUint32(){
+      const a = new Uint32Array(1);
+      crypto.getRandomValues(a);
+      return a[0];
+    }
+    // unbiased int in [0, n)
+    function randInt(n){
+      if (n <= 0) throw new Error('range must be > 0');
+      const max = 0xFFFFFFFF; // 2^32 - 1
+      const limit = Math.floor((max + 1) / n) * n - 1; // largest value we accept
+      while(true){
+        const v = randUint32();
+        if (v <= limit) return v % n;
+      }
+    }
+    function choice(arr){ return arr[randInt(arr.length)]; }
+
+    // ========== Character classes ==========
+    const UPPER = Array.from('ABCDEFGHIJKLMNOPQRSTUVWXYZ');
+    const LOWER = Array.from('abcdefghijklmnopqrstuvwxyz');
+    const DIGIT = Array.from('0123456789');
+    function uniqueChars(str){
+      return Array.from(new Set(Array.from(str)));
+    }
+
+    function getSettings(){
+      const length = parseInt($('#len').value, 10);
+      const upper = $('#tgUpper').dataset.on === 'true';
+      const lower = $('#tgLower').dataset.on === 'true';
+      const digits = $('#tgDigits').dataset.on === 'true';
+      const symbolsOn = $('#tgSymbols').dataset.on === 'true';
+      const ensure = $('#tgEnsureClasses').dataset.on === 'true';
+      const symbols = uniqueChars($('#symbols').value || '');
+      return { length, upper, lower, digits, symbolsOn, symbols, ensure };
+    }
+
+    function selectedAlphabet(){
+      const s = getSettings();
+      const pools = [];
+      if (s.upper) pools.push(UPPER);
+      if (s.lower) pools.push(LOWER);
+      if (s.digits) pools.push(DIGIT);
+      if (s.symbolsOn && s.symbols.length) pools.push(s.symbols);
+      const all = pools.flat();
+      return { pools, all };
+    }
+
+    function updateCharsetStats(){
+      const s = getSettings();
+      const {pools, all} = selectedAlphabet();
+      const parts = [];
+      if (s.upper) parts.push(`A–Z:${UPPER.length}`);
+      if (s.lower) parts.push(`a–z:${LOWER.length}`);
+      if (s.digits) parts.push(`0–9:${DIGIT.length}`);
+      if (s.symbolsOn) parts.push(`symbols:${s.symbols.length}`);
+      $('#charsetStats').textContent = `Alphabet size N = ${all.length}  ·  ${parts.join('  ·  ')}`;
+    }
+
+    // ========== Password generation ==========
+    function fisherYatesShuffle(arr){
+      for (let i = arr.length - 1; i > 0; i--) {
+        const j = randInt(i + 1);
+        [arr[i], arr[j]] = [arr[j], arr[i]];
+      }
+      return arr;
+    }
+
+    function generatePassword(){
+      const s = getSettings();
+      const { pools, all } = selectedAlphabet();
+      if (all.length === 0) throw new Error('Select at least one character class');
+      const L = s.length;
+      const out = new Array(L);
+      let idx = 0;
+      if (s.ensure && pools.length > 0){
+        if (L < pools.length) {
+          // If length is smaller than number of classes, fallback to no ensure.
+          for (let i=0;i<L;i++) out[i] = choice(all);
+        } else {
+          // Ensure at least one from each selected pool
+          for (const pool of pools){ out[idx++] = choice(pool); }
+          for (; idx < L; idx++) out[idx] = choice(all);
+          fisherYatesShuffle(out);
+        }
+      } else {
+        for (let i=0;i<L;i++) out[i] = choice(all);
+      }
+      return out.join('');
+    }
+
+    // ========== Entropy and crack time ==========
+    function entropyBits(length, alphabetSize){
+      if (!alphabetSize || !length) return 0;
+      return length * Math.log2(alphabetSize);
+    }
+
+    const LOG10_2 = Math.LOG10E * Math.LN2; // log10(2)
+
+    function secondsToHumanFromLog10(log10s){
+      // Use magnitudes to avoid overflow. Convert to largest sensible unit.
+      const units = [
+        ['years', Math.log10(31557600)],
+        ['days', Math.log10(86400)],
+        ['hours', Math.log10(3600)],
+        ['minutes', Math.log10(60)],
+        ['seconds', 0]
+      ];
+      for (const [name, u] of units){
+        const val = log10s - u;
+        if (val >= 0){
+          const num = Math.pow(10, Math.min(val, 12)); // cap to 1e12 display
+          return `${num.toFixed(num>=100?0:num>=10?1:2)} ${name}`;
+        }
+      }
+      // If negative, it's less than a second
+      const inv = Math.pow(10, -log10s);
+      return inv>1000?`1/${inv.toFixed(0)} seconds`:`${Math.pow(10, log10s).toFixed(2)} seconds`;
+    }
+
+    function crackTimeLabel(bits, rate){
+      if (bits<=0) return { label:'–', time:'–' };
+      // Expected attempts = 2^(bits-1)
+      const log10Sec = (bits - 1) * LOG10_2 - Math.log10(rate);
+      const time = secondsToHumanFromLog10(log10Sec);
+      return { time };
+    }
+
+    function strengthFromBits(bits){
+      if (bits < 40) return {label:'Very weak', fill:12, color:'var(--bad)'};
+      if (bits < 60) return {label:'Weak', fill:28, color:'var(--bad)'};
+      if (bits < 80) return {label:'Okay', fill:50, color:'#ffae42'};
+      if (bits < 100) return {label:'Strong', fill:72, color:'var(--good)'};
+      if (bits < 128) return {label:'Excellent', fill:88, color:'var(--good)'};
+      return {label:'Overkill', fill:100, color:'var(--good)'};
+    }
+
+    function updatePreviewAndStats(current){
+      const pw = (typeof current === 'string') ? current : generatePassword();
+      $('#preview').textContent = pw;
+      const s = getSettings();
+      const alphabet = selectedAlphabet().all.length;
+      const bits = entropyBits(pw.length, alphabet);
+      const rate = parseFloat($('#attackRate').value);
+      const ct = crackTimeLabel(bits, rate);
+      const st = strengthFromBits(bits);
+      $('#strengthLabel').textContent = st.label;
+      const fill = Math.max(0, Math.min(100, st.fill));
+      $('#meterFill').style.width = fill + '%';
+      $('#bitsLabel').textContent = `Entropy: ${bits.toFixed(1)} bits`;
+      $('#crackLabel').textContent = `Crack time (avg @ ${rate.toExponential()} /s): ${ct.time}`;
+      const hasAll = checkCoverage(pw);
+      $('#coverageLabel').textContent = `Class coverage: ${hasAll ? 'yes' : 'no'}`;
+      updateCharsetStats();
+      return pw;
+    }
+
+    function checkCoverage(password){
+      const s = getSettings();
+      let u=false,l=false,d=false,y=false;
+      for (const ch of password){
+        if (!u && /[A-Z]/.test(ch)) u=true;
+        else if (!l && /[a-z]/.test(ch)) l=true;
+        else if (!d && /[0-9]/.test(ch)) d=true;
+        else if (!y && s.symbolsOn && s.symbols.includes(ch)) y=true;
+      }
+      const required = [s.upper?u:true, s.lower?l:true, s.digits?d:true, s.symbolsOn?y:true];
+      return required.every(Boolean);
+    }
+
+    // ========== Clipboard ==========
+    async function copyWithAutoClear(text, clearAfterMs=20000){
+      try{
+        await navigator.clipboard.writeText(text);
+        toast(`Copied to clipboard. Will clear in ${(clearAfterMs/1000)|0}s.`);
+        setTimeout(async()=>{
+          try{ await navigator.clipboard.writeText(''); }catch{ /* ignore */ }
+        }, clearAfterMs);
+      }catch(err){ toast('Clipboard copy failed.'); console.error(err); }
+    }
+
+    // ========== Batch + History ==========
+    const history = [];
+    let batch = [];
+
+    function addHistory(pw, bits){
+      const item = { pw, bits, ts: nowIso() };
+      history.unshift(item);
+      renderHistory();
+    }
+
+    function renderHistory(){
+      const root = $('#historyList');
+      // clear all except headers (first 5 children)
+      root.innerHTML = `
+        <div class="head">#</div>
+        <div class="head">Password</div>
+        <div class="head">Entropy</div>
+        <div class="head">Timestamp</div>
+        <div class="head">Actions</div>`;
+      history.forEach((it, i)=>{
+        const idx = i+1;
+        root.append(
+          cell(idx),
+          cellMono(it.pw),
+          cell(`${it.bits.toFixed(1)} b`),
+          cell(new Date(it.ts).toLocaleString()),
+          actionCell(it.pw, `${it.bits.toFixed(1)} b`)
+        );
+      });
+    }
+
+    function renderBatch(){
+      const root = $('#batchList');
+      root.innerHTML = `
+        <div class="head">#</div>
+        <div class="head">Password</div>
+        <div class="head">Entropy</div>
+        <div class="head">Generated</div>
+        <div class="head">Actions</div>`;
+      batch.forEach((it, i)=>{
+        const idx = i+1;
+        root.append(
+          cell(idx),
+          cellMono(it.pw),
+          cell(`${it.bits.toFixed(1)} b`),
+          cell(new Date(it.ts).toLocaleString()),
+          actionCell(it.pw, `${it.bits.toFixed(1)} b`)
+        );
+      });
+    }
+
+    function cell(text){
+      const d=document.createElement('div'); d.textContent=text; return d;
+    }
+    function cellMono(text){
+      const d=document.createElement('div'); d.textContent=text; d.style.fontFamily='ui-monospace, Menlo, Consolas, monospace'; d.className='preview'; d.style.padding='6px 8px'; d.style.borderStyle='solid'; d.style.borderWidth='1px'; d.style.borderColor='var(--border)'; d.style.background='#0b1030'; return d;
+    }
+    function actionCell(pw, entropyLabel){
+      const d=document.createElement('div');
+      const copyBtn = document.createElement('button'); copyBtn.className='btn tiny'; copyBtn.textContent='📋 Copy'; copyBtn.onclick=()=>copyWithAutoClear(pw);
+      const useBtn = document.createElement('button'); useBtn.className='btn ghost tiny'; useBtn.style.marginLeft='6px'; useBtn.textContent='↪ Use'; useBtn.onclick=()=>updatePreviewAndStats(pw);
+      const saveBtn = document.createElement('button'); saveBtn.className='btn success tiny'; saveBtn.style.marginLeft='6px'; saveBtn.textContent='💾 Save'; saveBtn.onclick=()=>saveCurrentToVaultPrompt(pw);
+      d.append(copyBtn, useBtn, saveBtn); return d;
+    }
+
+    // ========== Export helpers ==========
+    function toCSV(rows){
+      const esc = v => '"' + String(v).replace(/"/g,'""') + '"';
+      return rows.map(r=>r.map(esc).join(',')).join('\n');
+    }
+
+    function download(filename, content, type='application/octet-stream'){
+      const blob = new Blob([content], {type});
+      const a = document.createElement('a');
+      a.href = URL.createObjectURL(blob);
+      a.download = filename;
+      a.click();
+      setTimeout(()=> URL.revokeObjectURL(a.href), 1000);
+    }
+
+    async function exportData(data, nameBase){
+      const format = $('#exportFormat').value;
+      const encOpt = $('#exportEnc').value;
+      let content, file;
+      if (format==='json'){
+        content = JSON.stringify(data, null, 2);
+        file = nameBase + '.json';
+      } else {
+        // flatten to CSV friendly if arrays of objects
+        const arr = Array.isArray(data)? data : (data.items || []);
+        const keys = arr.length? Object.keys(arr[0]) : [];
+        const rows = [keys, ...arr.map(o => keys.map(k=> o[k]))];
+        content = toCSV(rows);
+        file = nameBase + '.csv';
+      }
+      if (encOpt==='pass'){
+        const pass = $('#exportPass').value;
+        if (!pass){ toast('Provide an export passphrase.'); return; }
+        const cipher = await encryptWithPass(pass, content);
+        content = JSON.stringify(cipher);
+        file += '.enc.json';
+      }
+      download(file, content, 'application/octet-stream');
+      toast('Exported.');
+    }
+
+    $('#exportEnc').addEventListener('change', ()=>{
+      $('#exportPassRow').style.display = $('#exportEnc').value==='pass' ? '' : 'none';
+    });
+
+    // ========== Vault (AES-GCM + PBKDF2) ==========
+    const VAULT_KEY = 'spg_vault';
+
+    function getVaultRaw(){
+      const j = localStorage.getItem(VAULT_KEY);
+      return j ? JSON.parse(j) : null;
+    }
+
+    async function createEmptyVault(pass){
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKey(pass, salt, 250000);
+      const data = { entries: [], createdAt: nowIso(), updatedAt: nowIso(), version:1 };
+      const {iv, ct} = await aesGcmEncrypt(key, JSON.stringify(data));
+      const rec = { version:1, kdf:{ name:'PBKDF2', hash:'SHA-256', iterations:250000, salt:b64(salt) }, iv:b64(iv), ciphertext:b64(ct) };
+      localStorage.setItem(VAULT_KEY, JSON.stringify(rec));
+      return { key, data, rec };
+    }
+
+    async function unlockVault(pass){
+      let rec = getVaultRaw();
+      if (!rec){
+        return await createEmptyVault(pass);
+      }
+      const salt = b64d(rec.kdf.salt);
+      const key = await deriveKey(pass, salt, rec.kdf.iterations);
+      try{
+        const data = JSON.parse(await aesGcmDecryptToString(key, b64d(rec.iv), b64d(rec.ciphertext)));
+        return { key, data, rec };
+      }catch(e){ throw new Error('Invalid passphrase'); }
+    }
+
+    async function saveVault(key, data){
+      data.updatedAt = nowIso();
+      const {iv, ct} = await aesGcmEncrypt(key, JSON.stringify(data));
+      const rec = getVaultRaw();
+      const newRec = { ...rec, iv:b64(iv), ciphertext:b64(ct) };
+      localStorage.setItem(VAULT_KEY, JSON.stringify(newRec));
+    }
+
+    async function changeVaultPass(oldKey, oldData, newPass){
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKey(newPass, salt, 300000);
+      const {iv, ct} = await aesGcmEncrypt(key, JSON.stringify(oldData));
+      const rec = { version:1, kdf:{ name:'PBKDF2', hash:'SHA-256', iterations:300000, salt:b64(salt) }, iv:b64(iv), ciphertext:b64(ct) };
+      localStorage.setItem(VAULT_KEY, JSON.stringify(rec));
+      return key;
+    }
+
+    async function purgeVault(){
+      localStorage.removeItem(VAULT_KEY);
+    }
+
+    async function encryptWithPass(pass, plaintext){
+      const salt = crypto.getRandomValues(new Uint8Array(16));
+      const key = await deriveKey(pass, salt, 200000);
+      const {iv, ct} = await aesGcmEncrypt(key, plaintext);
+      return { version:1, kdf:{name:'PBKDF2', hash:'SHA-256', iterations:200000, salt:b64(salt)}, iv:b64(iv), ciphertext:b64(ct) };
+    }
+
+    // WebCrypto primitives
+    async function deriveKey(pass, salt, iterations){
+      const baseKey = await crypto.subtle.importKey('raw', enc.encode(pass), 'PBKDF2', false, ['deriveKey']);
+      return await crypto.subtle.deriveKey(
+        { name:'PBKDF2', salt, iterations, hash:'SHA-256' },
+        baseKey,
+        { name:'AES-GCM', length:256 },
+        false,
+        ['encrypt','decrypt']
+      );
+    }
+
+    async function aesGcmEncrypt(key, plaintext){
+      const iv = crypto.getRandomValues(new Uint8Array(12));
+      const ct = await crypto.subtle.encrypt({name:'AES-GCM', iv}, key, enc.encode(plaintext));
+      return { iv, ct: new Uint8Array(ct) };
+    }
+    async function aesGcmDecryptToString(key, iv, ciphertext){
+      const pt = await crypto.subtle.decrypt({name:'AES-GCM', iv}, key, ciphertext);
+      return dec.decode(pt);
+    }
+
+    function b64(bytes){ return btoa(String.fromCharCode(...bytes)); }
+    function b64d(str){ return new Uint8Array(atob(str).split('').map(c=>c.charCodeAt(0))); }
+
+    // Vault UI state
+    let vaultKey = null;
+    let vaultData = null;
+
+    function renderVault(){
+      if (!vaultKey || !vaultData){
+        $('#vaultLocked').style.display='';
+        $('#vaultUnlocked').style.display='none';
+        $('#btnUnlockVault').style.display='';
+        $('#btnLockVault').style.display='none';
+        return;
+      }
+      $('#vaultLocked').style.display='none';
+      $('#vaultUnlocked').style.display='';
+      $('#btnUnlockVault').style.display='none';
+      $('#btnLockVault').style.display='';
+      $('#vaultStats').textContent = `${vaultData.entries.length} items · updated ${new Date(vaultData.updatedAt).toLocaleString()}`;
+      const root = $('#vaultList');
+      root.innerHTML = `
+        <div class="head">#</div>
+        <div class="head">Label</div>
+        <div class="head">Password</div>
+        <div class="head">Saved</div>
+        <div class="head">Actions</div>`;
+      vaultData.entries.forEach((e,i)=>{
+        const idx = i+1;
+        const pwCell = cellMono(e.password);
+        pwCell.style.maxWidth='100%';
+        root.append(
+          cell(idx),
+          cell(e.label || '(no label)'),
+          pwCell,
+          cell(new Date(e.ts).toLocaleString()),
+          vaultActionCell(i, e)
+        );
+      });
+    }
+
+    function vaultActionCell(index, entry){
+      const d=document.createElement('div');
+      const copyBtn=document.createElement('button'); copyBtn.className='btn tiny'; copyBtn.textContent='📋 Copy'; copyBtn.onclick=()=>copyWithAutoClear(entry.password);
+      const delBtn=document.createElement('button'); delBtn.className='btn danger tiny'; delBtn.style.marginLeft='6px'; delBtn.textContent='🗑️ Delete'; delBtn.onclick=async()=>{ vaultData.entries.splice(index,1); await saveVault(vaultKey, vaultData); renderVault(); };
+      d.append(copyBtn, delBtn); return d;
+    }
+
+    async function saveCurrentToVault(){
+      if (!vaultKey) { toast('Unlock the vault first.'); return; }
+      const label = $('#vaultLabel').value.trim();
+      const pw = $('#preview').textContent.trim();
+      if (!pw){ toast('Nothing to save.'); return; }
+      vaultData.entries.unshift({ label, password: pw, ts: nowIso() });
+      await saveVault(vaultKey, vaultData);
+      $('#vaultLabel').value='';
+      renderVault();
+      toast('Saved to vault.');
+    }
+
+    function saveCurrentToVaultPrompt(pw){
+      if (!vaultKey){ toast('Unlock the vault to save.'); return; }
+      const label = prompt('Label for this password? (optional)', '');
+      if (label===null) return;
+      vaultData.entries.unshift({ label: (label||'') , password: pw, ts: nowIso() });
+      saveVault(vaultKey, vaultData).then(()=>{ renderVault(); toast('Saved to vault.'); });
+    }
+
+    // ========== Memorable: BIP39 wordlist (2048 words) ==========
+    // Source: BIP‑39 English list (commonly used mnemonic word list). Kept inline for offline use.
+    // Note: Using this list for passphrases is fine; it's here to provide a high‑quality uniform dictionary.
+    const BIP39 = [
+      "abandon","ability","able","about","above","absent","absorb","abstract","absurd","abuse","access","accident","account","accuse","achieve","acid","acoustic","acquire","across","act","action","actor","actress","actual","adapt","add","addict","address","adjust","admit","adult","advance","advice","aerobic","affair","afford","afraid","again","age","agent","agree","ahead","aim","air","airport","aisle","alarm","album","alcohol","alert","alien","all","alley","allow","almost","alone","alpha","already","also","alter","always","amateur","amazing","among","amount","amused","analyst","anchor","ancient","anger","angle","angry","animal","ankle","announce","annual","another","answer","antenna","antique","anxiety","any","apart","apology","appear","apple","approve","april","arch","arctic","area","arena","argue","arm","armed","armor","army","around","arrange","arrest","arrive","arrow","art","artefact","artist","artwork","ask","aspect","assault","asset","assist","assume","asthma","athlete","atom","attack","attend","attitude","attract","auction","audit","august","aunt","author","auto","autumn","average","avocado","avoid","awake","aware","away","awesome","awful","awkward","axis","baby","bachelor","bacon","badge","bag","balance","balcony","ball","bamboo","banana","banner","bar","barely","bargain","barrel","base","basic","basket","battle","beach","bean","beauty","because","become","beef","before","begin","behave","behind","believe","below","belt","bench","benefit","best","betray","better","between","beyond","bicycle","bid","bike","bind","biology","bird","birth","bitter","black","blade","blame","blanket","blast","bleak","bless","blind","blood","blossom","blouse","blue","blur","blush","board","boat","body","boil","bomb","bone","bonus","book","boost","border","boring","borrow","boss","bottom","bounce","box","boy","bracket","brain","brand","brass","brave","bread","breeze","brick","bridge","brief","bright","bring","brisk","broccoli","broken","bronze","broom","brother","brown","brush","bubble","buddy","budget","buffalo","build","bulb","bulk","bullet","bundle","bunker","burden","burger","burst","bus","business","busy","butter","buyer","buzz","cabbage","cabin","cable","cactus","cage","cake","call","calm","camera","camp","can","canal","cancel","candy","cannon","canoe","canvas","canyon","capable","capital","captain","car","carbon","card","cargo","carpet","carry","cart","case","cash","casino","castle","casual","cat","catalog","catch","category","cattle","caught","cause","caution","cave","ceiling","celery","cement","census","century","cereal","certain","chair","chalk","champion","change","chaos","chapter","charge","chase","chat","cheap","check","cheese","chef","cherry","chest","chicken","chief","child","chimney","choice","choose","chronic","chuckle","chunk","churn","cigar","cinnamon","circle","citizen","city","civil","claim","clap","clarify","claw","clay","clean","clerk","clever","click","client","cliff","climb","clinic","clip","clock","clog","close","cloth","cloud","clown","club","clump","cluster","clutch","coach","coast","coconut","code","coffee","coil","coin","collect","color","column","combine","come","comfort","comic","common","company","concert","conduct","confirm","congress","connect","consider","control","convince","cook","cool","copper","copy","coral","core","corn","correct","cost","cotton","couch","country","couple","course","cousin","cover","coyote","crack","cradle","craft","cram","crane","crash","crater","crawl","crazy","cream","credit","creek","crew","cricket","crime","crisp","critic","crop","cross","crouch","crowd","crucial","cruel","cruise","crumble","crunch","crush","cry","crystal","cube","culture","cup","cupboard","curious","current","curtain","curve","cushion","custom","cute","cycle","dad","damage","damp","dance","danger","daring","dash","daughter","dawn","day","deal","debate","debris","decade","december","decide","decline","decorate","decrease","deer","defense","define","defy","degree","delay","deliver","demand","demise","denial","dentist","deny","depart","depend","deposit","depth","deputy","derive","describe","desert","design","desk","despair","destroy","detail","detect","develop","device","devote","diagram","dial","diamond","diary","dice","diesel","diet","differ","digital","dignity","dilemma","dinner","dinosaur","direct","dirt","disagree","discover","disease","dish","dismiss","disorder","display","distance","divert","divide","divorce","dizzy","doctor","document","dog","doll","dolphin","domain","donate","donkey","donor","door","dose","double","dove","draft","dragon","drama","drastic","draw","dream","dress","drift","drill","drink","drip","drive","drop","drum","dry","duck","dumb","dune","during","dust","dutch","duty","dwarf","dynamic","eager","eagle","early","earn","earth","easily","east","easy","echo","ecology","economy","edge","edit","educate","effort","egg","eight","either","elbow","elder","electric","elegant","element","elephant","elevator","elite","else","embark","embody","embrace","emerge","emotion","employ","empower","empty","enable","enact","end","endless","endorse","enemy","energy","enforce","engage","engine","enhance","enjoy","enlist","enough","enrich","enroll","ensure","enter","entire","entry","envelope","episode","equal","equip","era","erase","erode","erosion","error","erupt","escape","essay","essence","estate","eternal","ethics","evidence","evil","evoke","evolve","exact","example","excess","exchange","excite","exclude","excuse","execute","exercise","exhaust","exhibit","exile","exist","exit","exotic","expand","expect","expire","explain","expose","express","extend","extra","eye","eyebrow","fabric","face","faculty","fade","faint","faith","fall","false","fame","family","famous","fan","fancy","fantasy","farm","fashion","fat","fatal","father","fatigue","fault","favorite","feature","february","federal","fee","feed","feel","female","fence","festival","fetch","fever","few","fiber","fiction","field","figure","file","film","filter","final","find","fine","finger","finish","fire","firm","first","fiscal","fish","fit","fitness","fix","flag","flame","flash","flat","flavor","flee","flight","flip","float","flock","floor","flower","fluid","flush","fly","foam","focus","fog","foil","fold","follow","food","foot","force","forest","forget","fork","fortune","forum","forward","fossil","foster","found","fox","fragile","frame","frequent","fresh","friend","fringe","frog","front","frost","frown","frozen","fruit","fuel","fun","funny","furnace","fury","future","gadget","gain","galaxy","gallery","game","gap","garage","garbage","garden","garlic","garment","gas","gasp","gate","gather","gauge","gaze","general","genius","genre","gentle","genuine","gesture","ghost","giant","gift","giggle","ginger","giraffe","girl","give","glad","glance","glare","glass","glide","glimpse","globe","gloom","glory","glove","glow","glue","goat","goddess","gold","good","goose","gorilla","gospel","gossip","govern","gown","grab","grace","grain","grant","grape","grass","gravity","great","green","grid","grief","grit","grocery","group","grow","grunt","guard","guess","guide","guilt","guitar","gun","gym","habit","hair","half","hammer","hamster","hand","happy","harbor","hard","harsh","harvest","hat","have","hawk","hazard","head","health","heart","heavy","hedgehog","height","hello","helmet","help","hen","hero","hidden","high","hill","hint","hip","hire","history","hobby","hockey","hold","hole","holiday","hollow","home","honey","hood","hope","horn","horror","horse","hospital","host","hotel","hour","hover","hub","huge","human","humble","humor","hundred","hungry","hunt","hurdle","hurry","hurt","husband","hybrid","ice","icon","idea","identify","idle","ignore","ill","illegal","illness","image","imitate","immense","immune","impact","impose","improve","impulse","inch","include","income","increase","index","indicate","indoor","industry","infant","inflict","inform","inhale","inherit","initial","inject","injury","inmate","inner","innocent","input","inquiry","insane","insect","inside","inspire","install","intact","interest","into","invest","invite","involve","iron","island","isolate","issue","item","ivory","jacket","jaguar","jar","jazz","jealous","jeans","jelly","jewel","job","join","joke","journey","joy","judge","juice","jump","jungle","junior","junk","just","kangaroo","keen","keep","ketchup","key","kick","kid","kidney","kind","kingdom","kiss","kit","kitchen","kite","kitten","kiwi","knee","knife","knock","know","lab","label","labor","ladder","lady","lake","lamp","language","laptop","large","later","latin","laugh","laundry","lava","law","lawn","lawsuit","layer","lazy","leader","leaf","learn","leave","lecture","left","leg","legal","legend","leisure","lemon","lend","length","lens","leopard","lesson","letter","level","liar","liberty","library","license","life","lift","light","like","limb","limit","link","lion","liquid","list","little","live","lizard","load","loan","lobster","local","lock","logic","lonely","long","loop","lottery","loud","lounge","love","loyal","lucky","luggage","lumber","lunar","lunch","luxury","lyrics","machine","mad","magic","magnet","maid","mail","main","major","make","mammal","man","manage","mandate","mango","mansion","manual","maple","marble","march","margin","marine","market","marriage","mask","mass","master","match","material","math","matrix","matter","maximum","maze","meadow","mean","measure","meat","mechanic","medal","media","melody","melt","member","memory","mention","menu","mercy","merge","merit","merry","mesh","message","metal","method","middle","midnight","milk","million","mimic","mind","minimum","minor","minute","miracle","mirror","misery","miss","mistake","mix","mixed","mixture","mobile","model","modify","mom","moment","monitor","monkey","monster","month","moon","moral","more","morning","mosquito","mother","motion","motor","mountain","mouse","move","movie","much","muffin","mule","multiply","muscle","museum","mushroom","music","must","mutual","myself","mystery","myth","naive","name","napkin","narrow","nasty","nation","nature","near","neck","need","negative","neglect","neither","nephew","nerve","nest","net","network","neutral","never","news","next","nice","night","noble","noise","nominee","noodle","normal","north","nose","notable","note","nothing","notice","novel","now","nuclear","number","nurse","nut","oak","obey","object","oblige","obscure","observe","obtain","obvious","occur","ocean","october","odor","off","offer","office","often","oil","okay","old","olive","olympic","omit","once","one","onion","online","only","open","opera","opinion","oppose","option","orange","orbit","orchard","order","ordinary","organ","orient","original","orphan","ostrich","other","outdoor","outer","output","outside","oval","oven","over","own","owner","oxygen","oyster","ozone","pact","paddle","page","pair","palace","palm","panda","panel","panic","panther","paper","parade","parent","park","parrot","party","pass","patch","path","patient","patrol","pattern","pause","pave","payment","peace","peanut","pear","peasant","pelican","pen","penalty","pencil","people","pepper","perfect","permit","person","pet","phone","photo","phrase","physical","piano","picnic","picture","piece","pig","pigeon","pill","pilot","pink","pioneer","pipe","pistol","pitch","pizza","place","planet","plastic","plate","play","please","pledge","pluck","plug","plunge","poem","poet","point","polar","pole","police","pond","pony","pool","popular","portion","position","possible","post","potato","pottery","poverty","powder","power","practice","praise","predict","prefer","prepare","present","pretty","prevent","price","pride","primary","print","priority","prison","private","prize","problem","process","produce","profit","program","project","promote","proof","property","prosper","protect","proud","provide","public","pudding","pull","pulp","pulse","pumpkin","punch","pupil","puppy","purchase","purity","purpose","purse","push","put","puzzle","pyramid","quality","quantum","quarter","question","quick","quit","quiz","quote","rabbit","raccoon","race","rack","radar","radio","rail","rain","raise","rally","ramp","ranch","random","range","rapid","rare","rate","rather","raven","raw","razor","ready","real","reason","rebel","rebuild","recall","receive","recipe","record","recycle","reduce","reflect","reform","refuse","region","regret","regular","reject","relax","release","relief","rely","remain","remember","remind","remove","render","renew","rent","reopen","repair","repeat","replace","report","require","rescue","resemble","resist","resource","response","result","retire","retreat","return","reunion","reveal","review","reward","rhythm","rib","ribbon","rice","rich","ride","ridge","rifle","right","rigid","ring","riot","ripple","risk","ritual","rival","river","road","roast","robot","robust","rocket","romance","roof","rookie","room","rose","rotate","rough","round","route","royal","rubber","rude","rug","rule","run","runway","rural","sad","saddle","sadness","safe","sail","salad","salmon","salon","salt","salute","same","sample","sand","satisfy","satoshi","sauce","sausage","save","say","scale","scan","scare","scatter","scene","scheme","school","science","scissors","scorpion","scout","scrap","screen","script","scrub","sea","search","season","seat","second","secret","section","security","seed","seek","segment","select","sell","seminar","senior","sense","sentence","series","service","session","settle","setup","seven","shadow","shaft","shallow","share","shed","shell","sheriff","shield","shift","shine","ship","shiver","shock","shoe","shoot","shop","short","shoulder","shove","shrimp","shrug","shuffle","shy","sibling","sick","side","siege","sight","sign","silent","silk","silly","silver","similar","simple","since","sing","siren","sister","situate","six","size","skate","sketch","ski","skill","skin","skirt","skull","slab","slam","sleep","slender","slice","slide","slight","slim","slogan","slot","slow","slush","small","smart","smile","smoke","smooth","snack","snake","snap","sniff","snow","soap","soccer","social","sock","soda","soft","solar","soldier","solid","solution","solve","someone","song","soon","sorry","sort","soul","sound","soup","source","south","space","spare","spatial","spawn","speak","special","speed","spell","spend","sphere","spice","spider","spike","spin","spirit","split","spoil","sponsor","spoon","sport","spot","spray","spread","spring","spy","square","squeeze","squirrel","stable","stadium","staff","stage","stairs","stamp","stand","start","state","stay","steak","steel","stem","step","stereo","stick","still","sting","stock","stomach","stone","stool","story","stove","strategy","street","strike","strong","struggle","student","stuff","stumble","style","subject","submit","subway","success","such","sudden","suffer","sugar","suggest","suit","summer","sun","sunny","sunset","super","supply","supreme","sure","surface","surge","surprise","surround","survey","suspect","sustain","swallow","swamp","swap","swarm","swear","sweet","swift","swim","swing","switch","sword","symbol","symptom","syrup","system","table","tackle","tag","tail","talent","talk","tank","tape","target","task","taste","tattoo","taxi","teach","team","tell","ten","tenant","tennis","tent","term","test","text","thank","that","theme","then","theory","there","they","thing","this","thought","three","thrive","throw","thumb","thunder","ticket","tide","tiger","tilt","timber","time","tiny","tip","tired","tissue","title","toast","tobacco","today","toddler","toe","together","toilet","token","tomato","tomorrow","tone","tongue","tonight","tool","tooth","top","topic","topple","torch","tornado","tortoise","toss","total","tourist","toward","tower","town","toy","track","trade","traffic","tragic","train","transfer","trap","trash","travel","tray","treat","tree","trend","trial","tribe","trick","trigger","trim","trip","trophy","trouble","truck","true","truly","trumpet","trust","truth","try","tube","tuition","tumble","tuna","tunnel","turkey","turn","turtle","twelve","twenty","twice","twin","twist","two","type","typical","ugly","umbrella","unable","unaware","uncle","uncover","under","undo","unfair","unfold","unhappy","uniform","unique","unit","universe","unknown","unlock","until","unusual","unveil","update","upgrade","uphold","upon","upper","upset","urban","urge","usage","use","used","useful","useless","usual","utility","vacant","vacuum","vague","valid","valley","valve","van","vanish","vapor","various","vast","vault","vehicle","velvet","vendor","venture","venue","verb","verify","version","very","vessel","veteran","viable","vibrant","vicious","victory","video","view","village","vintage","violin","virtual","virus","visa","visit","visual","vital","vivid","vocal","voice","void","volcano","volume","vote","voyage","wage","wagon","wait","walk","wall","walnut","want","warfare","warm","warrior","wash","wasp","waste","water","wave","way","wealth","weapon","wear","weasel","weather","web","wedding","weekend","weird","welcome","west","wet","whale","what","wheat","wheel","when","where","whip","whisper","wide","width","wife","wild","will","win","window","wine","wing","wink","winner","winter","wire","wisdom","wise","wish","witness","wolf","woman","wonder","wood","wool","word","work","world","worry","worth","wrap","wreck","wrestle","wrist","write","wrong","yard","year","yellow","you","young","youth","zebra","zero","zone","zoo"
+    ];
+
+    function randomSeparator(){
+      const opts=['-','_','.',' '];
+      return opts[randInt(opts.length)];
+    }
+
+    function formatCase(w, mode, i){
+      switch(mode){
+        case 'lower': return w;
+        case 'upper': return w.toUpperCase();
+        case 'title': return w[0].toUpperCase()+w.slice(1);
+        case 'capitalize': return i===0 ? w[0].toUpperCase()+w.slice(1) : w;
+        default: return w;
+      }
+    }
+
+    function passphraseEntropy(words, sepAdded, numberAdded, symbolAdded){
+      // Using 2048-word list → each word gives 11 bits. Separators/literals contribute little;
+      // if number/symbol added, add log2(10) / log2(|symbols|)
+      const wordBits = words * Math.log2(2048);
+      let extra = 0;
+      if (numberAdded) extra += Math.log2(10);
+      if (symbolAdded) extra += Math.log2(uniqueChars($('#symbols').value).length || 1);
+      // separator chosen from fixed set? If random, add ~log2(4)
+      if (sepAdded==='random') extra += Math.log2(4);
+      return wordBits + extra;
+    }
+
+    function generatePassphrase(){
+      const n = Math.max(3, Math.min(10, parseInt($('#ppWords').value||'6',10)));
+      const sepMode = $('#ppSep').value;
+      const sep = sepMode==='random' ? randomSeparator() : sepMode;
+      const caseMode = $('#ppCase').value;
+      const addNum = $('#ppAddNumber').dataset.on==='true';
+      const addSym = $('#ppAddSymbol').dataset.on==='true';
+      const arr = [];
+      for (let i=0;i<n;i++){
+        const w = BIP39[randInt(BIP39.length)];
+        arr.push(formatCase(w, caseMode, i));
+      }
+      let out = arr.join(sep);
+      if (addNum) out += String(randInt(10));
+      if (addSym){
+        const syms = uniqueChars($('#symbols').value);
+        if (syms.length) out += syms[randInt(syms.length)];
+      }
+      const bits = passphraseEntropy(n, sepMode, addNum, addSym);
+      $('#ppEntropy').textContent = `Entropy: ${bits.toFixed(1)} bits`;
+      $('#ppPreview').textContent = out;
+      return out;
+    }
+
+    // ========== Pattern generator ==========
+    const VOWELS_L = Array.from('aeiou');
+    const CONS_L = Array.from('bcdfghjklmnpqrstvwxyz');
+    const VOWELS_U = VOWELS_L.map(c=>c.toUpperCase());
+    const CONS_U = CONS_L.map(c=>c.toUpperCase());
+
+    function patternAlphabetForToken(tok){
+      const s = getSettings();
+      const symbols = s.symbolsOn ? s.symbols : [];
+      switch(tok){
+        case 'C': return CONS_U;
+        case 'c': return CONS_L;
+        case 'V': return VOWELS_U;
+        case 'v': return VOWELS_L;
+        case 'L': return UPPER; // any uppercase letter
+        case 'l': return LOWER; // any lowercase letter
+        case '#': case 'D': return DIGIT;
+        case 'S': return symbols.length? symbols : ['!'];
+        default: return null; // literal
+      }
+    }
+
+    function generateFromPattern(pat){
+      const out=[];
+      let bits=0;
+      for (const ch of pat){
+        const alpha = patternAlphabetForToken(ch);
+        if (alpha){ out.push(alpha[randInt(alpha.length)]); bits += Math.log2(alpha.length); }
+        else out.push(ch);
+      }
+      return { text: out.join(''), bits };
+    }
+
+    // ========== Wiring UI ==========
+    function toggleClick(el){
+      el.addEventListener('click', ()=>{
+        const on = el.dataset.on !== 'true';
+        el.dataset.on = on ? 'true' : 'false';
+        el.setAttribute('aria-checked', String(on));
+        updatePreviewAndStats();
+      });
+    }
+
+    ['#tgUpper','#tgLower','#tgDigits','#tgSymbols','#tgEnsureClasses','#ppAddNumber','#ppAddSymbol'].forEach(id=> toggleClick($(id)));
+
+    $('#symbols').addEventListener('input', ()=>{ updatePreviewAndStats(); });
+    $('#len').addEventListener('input', ()=>{ $('#lenLabel').textContent=$('#len').value; updatePreviewAndStats(); });
+    $$('.preset').forEach(p => p.addEventListener('click', ()=>{ $('#len').value=p.dataset.len; $('#lenLabel').textContent=p.dataset.len; updatePreviewAndStats(); }));
+
+    $('#btnRegenerate').addEventListener('click', ()=> updatePreviewAndStats());
+    $('#attackRate').addEventListener('change', ()=> updatePreviewAndStats($('#preview').textContent));
+
+    $('#btnCopy').addEventListener('click', ()=> copyWithAutoClear($('#preview').textContent));
+
+    $('#btnAddToHistory').addEventListener('click', ()=>{
+      const pw = $('#preview').textContent.trim();
+      if (!pw) return;
+      const s = getSettings();
+      const bits = entropyBits(pw.length, selectedAlphabet().all.length);
+      addHistory(pw, bits);
+      toast('Added to history.');
+    });
+
+    $('#btnGenerateBatch').addEventListener('click', ()=>{
+      const count = Math.max(1, Math.min(200, parseInt($('#batchCount').value||'10',10)));
+      batch = [];
+      for (let i=0;i<count;i++){
+        const pw = generatePassword();
+        const bits = entropyBits(pw.length, selectedAlphabet().all.length);
+        batch.push({ pw, bits, ts: nowIso() });
+      }
+      renderBatch();
+      toast(`Generated ${batch.length} passwords.`);
+    });
+
+    $('#btnExportBatch').addEventListener('click', async ()=>{
+      if (!batch.length){ toast('No batch results to export.'); return; }
+      await exportData(batch, `batch_${new Date().toISOString().replace(/[:.]/g,'-')}`);
+    });
+
+    $('#btnExportHistory').addEventListener('click', async ()=>{
+      await exportData(history, `history_${new Date().toISOString().replace(/[:.]/g,'-')}`);
+    });
+
+    $('#btnClearHistory').addEventListener('click', ()=>{ history.length=0; renderHistory(); });
+
+    // Memorable tabs
+    $$('.tabbar .tab').forEach(btn=>{
+      btn.addEventListener('click', ()=>{
+        $$('.tabbar .tab').forEach(b=>b.classList.remove('active'));
+        btn.classList.add('active');
+        $('#tab-passphrase').style.display = btn.dataset.tab==='passphrase' ? '' : 'none';
+        $('#tab-pattern').style.display = btn.dataset.tab==='pattern' ? '' : 'none';
+      });
+    });
+
+    $('#btnGenPassphrase').addEventListener('click', ()=> generatePassphrase());
+    $('#btnUsePassphrase').addEventListener('click', ()=>{
+      const text = $('#ppPreview').textContent.trim() || generatePassphrase();
+      updatePreviewAndStats(text);
+    });
+
+    $('#btnGenPattern').addEventListener('click', ()=>{
+      const pat = $('#pattern').value || 'Cvccvc-###-CvccvS';
+      const r = generateFromPattern(pat);
+      $('#patPreview').textContent = r.text;
+      $('#patEntropy').textContent = `Entropy: ${r.bits.toFixed(1)} bits`;
+    });
+    $('#btnUsePattern').addEventListener('click', ()=>{
+      const pat = $('#pattern').value || 'Cvccvc-###-CvccvS';
+      const r = generateFromPattern(pat);
+      updatePreviewAndStats(r.text);
+    });
+
+    // Vault controls
+    $('#btnUnlockVault').addEventListener('click', ()=>{ document.getElementById('vaultPass').focus(); window.scrollTo({top: document.getElementById('vaultPass').getBoundingClientRect().top + window.scrollY - 80, behavior:'smooth'}); });
+    $('#btnDoUnlock').addEventListener('click', async ()=>{
+      const pass = $('#vaultPass').value;
+      if (!pass) { toast('Enter a passphrase.'); return; }
+      try{
+        const {key, data} = await unlockVault(pass);
+        vaultKey = key; vaultData = data; $('#vaultPass').value=''; renderVault(); toast('Vault unlocked.');
+      }catch(e){ toast('Unlock failed: invalid passphrase.'); }
+    });
+    $('#btnLockVault').addEventListener('click', ()=>{ vaultKey=null; vaultData=null; renderVault(); toast('Vault locked.'); });
+    $('#btnSaveToVault').addEventListener('click', ()=> saveCurrentToVault());
+    $('#btnSavePreviewToVault').addEventListener('click', ()=> saveCurrentToVault());
+    $('#btnChangePass').addEventListener('click', async ()=>{
+      if (!vaultKey||!vaultData){ toast('Unlock first.'); return; }
+      const newPass = prompt('Enter a NEW vault passphrase'); if (!newPass) return;
+      vaultKey = await changeVaultPass(vaultKey, vaultData, newPass);
+      toast('Vault passphrase updated.');
+    });
+    $('#btnExportVault').addEventListener('click', ()=>{
+      const rec = getVaultRaw();
+      if (!rec){ toast('No vault data'); return; }
+      download('vault_encrypted.json', JSON.stringify(rec, null, 2), 'application/json');
+    });
+    $('#btnExportVaultPlain').addEventListener('click', ()=>{
+      if (!vaultKey||!vaultData){ toast('Unlock first.'); return; }
+      download('vault_decrypted.json', JSON.stringify(vaultData, null, 2), 'application/json');
+      toast('Decrypted vault exported. Handle with care.');
+    });
+    $('#btnPurgeVault').addEventListener('click', async ()=>{
+      if (!confirm('This deletes the encrypted vault from this browser. Continue?')) return;
+      await purgeVault();
+      vaultKey=null; vaultData=null; renderVault(); toast('Vault purged.');
+    });
+
+    // Global export all
+    $('#btnExportAll').addEventListener('click', async ()=>{
+      const data = { batch, history };
+      await exportData(data, `export_${new Date().toISOString().replace(/[:.]/g,'-')}`);
+    });
+
+    // Initial render
+    updateCharsetStats();
+    updatePreviewAndStats();
+
+  })();
+  </script>
+</body>
+</html>
